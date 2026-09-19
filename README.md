@@ -9,7 +9,7 @@ This repository contains a two-line fix, a DKMS package that keeps the patched m
 in place across kernel updates, and a guard that prevents your shared folders from
 being mounted when the patched module is *not* in use.
 
-Status: **not yet reported upstream** (see [Upstream status](#upstream-status)). Last updated: 2026-09-20.
+Status: **reported upstream**, awaiting review (see [Upstream status](#upstream-status)). Last updated: 2026-09-20.
 
 Japanese write-up: https://techhowto.blog/posts/virtualbox-vboxsf-endless-write-loop-bug ([summary in this repo](README.ja.md))
 
@@ -169,8 +169,10 @@ while the share is not mounted.
 
 ## Upstream status
 
-* Linux kernel (`fs/vboxsf` maintainer, linux-fsdevel): not reported yet
-* Ubuntu (Launchpad): not reported yet
+* Linux kernel (`fs/vboxsf` maintainer, linux-fsdevel, linux-kernel): patch sent on
+  2026-09-19, awaiting review:
+  https://lore.kernel.org/linux-fsdevel/20260919174136.3325-1-k.shiomi@techhowto.blog/
+* Ubuntu (Launchpad): https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2167772
 * A second, unrelated bug found during the investigation: opening a file on `vboxsf`
   with `O_DIRECT` fails as expected, but the cleanup dereferences a NULL pointer
   (`vboxsf_release_sf_handle` ← `vboxsf_file_release` ← `__fput` ← `openat`). To be
@@ -182,8 +184,8 @@ This section is updated as the reports progress.
 
 A minimal reproducer (a few lines of Python) exists but is not published here yet, to
 avoid handing out a ready-made way to fill up other people's disks before the fix is
-available from distributions. It will be added together with the upstream report.
-If you need it for verification, open an issue.
+available from distributions. The trigger conditions are described in the submission
+linked above. If you need the reproducer for verification, open an issue.
 
 ## License
 

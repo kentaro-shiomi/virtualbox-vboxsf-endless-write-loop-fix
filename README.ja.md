@@ -1,6 +1,6 @@
 # vboxsf-fix（日本語の要約）
 
-最終更新：2026-09-20 ／ 上流への報告：未実施
+最終更新：2026-09-20 ／ 上流への報告：済（査読待ち）
 
 VirtualBox の共有フォルダ（`vboxsf`）に、**まだ読み込まれていないメモリのページ**から
 書き込むと、カーネルの中で書き込み処理が無限ループします。中身がゼロのファイルが
@@ -47,4 +47,9 @@ sudo ./scripts/install.sh
 
 ## 上流への報告
 
-この時点では未報告です。進捗はこのリポジトリに追記します。
+2026-09-19 に vboxsf の保守担当と linux-fsdevel にパッチを送付し、査読待ちです。
+
+- カーネルのメーリングリストのスレッド：英語版 README の [Upstream status](README.md#upstream-status) を参照
+- Ubuntu（Launchpad）： https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2167772
+
+進捗はこのリポジトリに追記します。
