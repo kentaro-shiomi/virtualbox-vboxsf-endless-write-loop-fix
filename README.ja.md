@@ -51,5 +51,3 @@ sudo ./scripts/install.sh
 
 - カーネルのメーリングリストのスレッド：英語版 README の [Upstream status](README.md#upstream-status) を参照
 - Ubuntu（Launchpad）： https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2167772
-
-進捗はこのリポジトリに追記します。

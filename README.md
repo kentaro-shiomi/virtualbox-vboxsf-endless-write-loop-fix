@@ -175,10 +175,8 @@ while the share is not mounted.
 * Ubuntu (Launchpad): https://bugs.launchpad.net/ubuntu/+source/linux/+bug/2167772
 * A second, unrelated bug found during the investigation: opening a file on `vboxsf`
   with `O_DIRECT` fails as expected, but the cleanup dereferences a NULL pointer
-  (`vboxsf_release_sf_handle` ← `vboxsf_file_release` ← `__fput` ← `openat`). To be
-  reported separately.
-
-This section is updated as the reports progress.
+  (`vboxsf_release_sf_handle` ← `vboxsf_file_release` ← `__fput` ← `openat`). Not
+  covered by this patch.
 
 ## Reproducer
 
