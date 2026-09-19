@@ -1,0 +1,44 @@
+# vboxsf-fix（日本語の要約）
+
+VirtualBox の共有フォルダ（`vboxsf`）に、**まだ読み込まれていないメモリのページ**から
+書き込むと、カーネルの中で書き込み処理が無限ループします。中身がゼロのファイルが
+増え続けてディスクが埋まり、書き込んだプロセスは `kill -9` でしか止まりません。
+
+詳しい解説は日本語の記事にあります → https://techhowto.blog/posts/virtualbox-vboxsf-endless-write-loop-bug
+
+## 症状の見分け方
+
+- 共有フォルダのファイルが、数バイトのはずなのに中身ゼロで増え続ける
+- `dmesg` に `iov_iter_revert` を含む警告が大量に出る
+- `syslog`、`kern.log`、journal が数GB に膨らむ
+
+```sh
+findmnt -t vboxsf
+modinfo -n vboxsf     # kernel/fs/vboxsf/... なら対象
+dmesg | grep -c iov_iter_revert
+```
+
+## 原因と修正
+
+`fs/vboxsf/file.c` の `vboxsf_write_end()` が、コピーできなかった分まで「書けた」と
+返しているため、呼び出し側がページの読み込みをやり直さず、位置だけ進めて無限に
+繰り返します。`patches/` の 2 行の修正で直ります。
+
+## 導入
+
+必要なもの：`dkms`、`gcc`、`make`、`curl`、`patch`、実行中のカーネルのヘッダー。
+Secure Boot が有効な環境では、署名がないため読み込めません。
+
+```sh
+sudo ./scripts/install.sh
+```
+
+アンインストールは `sudo ./scripts/uninstall.sh` です。
+
+カーネル更新でビルドに失敗したときに気付けるよう、修正版でなければ共有フォルダを
+マウントしない仕組み（`tools/vboxsf-fix-check`）も入ります。使い方は英語版の README を
+参照してください。
+
+## 上流への報告
+
+この時点では未報告です。進捗はこのリポジトリに追記します。

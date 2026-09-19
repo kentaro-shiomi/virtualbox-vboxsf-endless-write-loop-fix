@@ -1,0 +1,6 @@
+# Drop-in for your shared folder mount unit, e.g.
+#   /etc/systemd/system/home-user-Shared.mount.d/fix-check.conf
+# so that the shared folder is not mounted unless the patched driver is in use.
+[Unit]
+Requires=vboxsf-fix-check.service
+After=vboxsf-fix-check.service

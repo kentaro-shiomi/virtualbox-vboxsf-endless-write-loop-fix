@@ -1,0 +1,57 @@
+vboxsf: fix endless write loop and data corruption on short copy
+
+vboxsf_write_end() ignores the number of bytes that the generic write
+path managed to copy into the folio: it initialises nwritten with the
+requested length, writes that many bytes to the host and returns the
+requested length even when copied == 0.
+
+generic_perform_write() then sees status != 0, so it never calls
+fault_in_iov_iter_readable(), advances pos by the full length and loops
+again with an iterator that has not been advanced at all.  The result is
+an endless loop that keeps appending zeroed data to the file (filling up
+the host file system) while flooding the log with
+
+  WARNING: lib/iov_iter.c:624 at iov_iter_revert+0x1fc/0x270
+
+because iov_iter_revert() is called with copied - status, i.e. a
+negative value.
+
+The same accounting bug can silently corrupt data: when the folio is
+already uptodate, the stale part is not zeroed, so a short copy makes
+vboxsf write the old folio contents to the host and report success.
+
+A short copy is not an error condition - it happens whenever the source
+pages are not faulted in yet, e.g. when writing directly from an mmap of
+another file or from shared memory (virtiofsd does exactly this).
+
+Return the number of bytes that were actually copied, and reject the
+write entirely when nothing was copied so that the generic code faults
+the source pages in and retries.
+
+Signed-off-by: Kentaro Shiomi <k.shiomi@techhowto.blog>
+---
+ fs/vboxsf/file.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+--- a/fs/vboxsf/file.c
++++ b/fs/vboxsf/file.c
+@@ -307,7 +307,7 @@
+ 	struct inode *inode = mapping->host;
+ 	struct vboxsf_handle *sf_handle = iocb->ki_filp->private_data;
+ 	size_t from = offset_in_folio(folio, pos);
+-	u32 nwritten = len;
++	u32 nwritten = copied;
+ 	u8 *buf;
+ 	int err;
+ 
+@@ -315,6 +315,10 @@
+ 	if (!folio_test_uptodate(folio) && copied < len)
+ 		folio_zero_range(folio, from + copied, len - copied);
+ 
++	/* Nothing copied: reject so generic_perform_write() faults in and retries */
++	if (!copied)
++		goto out;
++
+ 	buf = kmap(&folio->page);
+ 	err = vboxsf_write(sf_handle->root, sf_handle->handle,
+ 			   pos, &nwritten, buf + from);

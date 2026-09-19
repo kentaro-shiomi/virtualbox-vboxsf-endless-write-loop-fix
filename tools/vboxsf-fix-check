@@ -1,0 +1,16 @@
+#!/bin/sh
+# Exit non-zero unless the running vboxsf module is the patched DKMS build.
+# Use it as a guard for your shared folder mount unit (see README).
+set -eu
+path=$(modinfo -n vboxsf 2>/dev/null || true)
+case "$path" in
+  */updates/dkms/*) ;;
+  *) echo "vboxsf-fix-check: vboxsf is not the patched DKMS build: ${path:-not found}" >&2; exit 1 ;;
+esac
+want=$(modinfo -F srcversion vboxsf)
+have=$(cat /sys/module/vboxsf/srcversion 2>/dev/null || true)
+if [ "$have" != "$want" ]; then
+  echo "vboxsf-fix-check: loaded vboxsf (${have:-not loaded}) differs from patched build ($want)" >&2
+  exit 1
+fi
+echo "vboxsf-fix-check: patched vboxsf in use ($have)"

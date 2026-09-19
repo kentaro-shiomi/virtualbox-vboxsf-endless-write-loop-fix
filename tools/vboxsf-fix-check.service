@@ -1,0 +1,9 @@
+[Unit]
+Description=Check that the patched vboxsf driver is in use
+After=systemd-modules-load.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/usr/sbin/modprobe vboxsf
+ExecStart=/usr/local/sbin/vboxsf-fix-check
