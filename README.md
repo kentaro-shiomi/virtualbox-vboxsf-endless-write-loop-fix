@@ -9,7 +9,7 @@ This repository contains a two-line fix, a DKMS package that keeps the patched m
 in place across kernel updates, and a guard that prevents your shared folders from
 being mounted when the patched module is *not* in use.
 
-Status: **not yet reported upstream** (see [Upstream status](#upstream-status)). Last updated: {{PUBDATE}}.
+Status: **not yet reported upstream** (see [Upstream status](#upstream-status)). Last updated: 2026-09-20.
 
 Japanese write-up: https://techhowto.blog/posts/virtualbox-vboxsf-endless-write-loop-bug ([summary in this repo](README.ja.md))
 
@@ -132,6 +132,10 @@ Uninstall:
 ```sh
 sudo ./scripts/uninstall.sh
 ```
+
+The installer downloads `fs/vboxsf` from raw.githubusercontent.com and falls back to
+git.kernel.org; both are retried a few times, because anonymous downloads can be rate
+limited (HTTP 429). If it still fails, wait a few minutes and run it again.
 
 ### Kernel version compatibility
 
