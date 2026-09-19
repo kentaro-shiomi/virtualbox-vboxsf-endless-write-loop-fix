@@ -37,9 +37,28 @@ done
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
+
+# Download one file of fs/vboxsf.  raw.githubusercontent.com rate limits
+# anonymous clients (HTTP 429), so fall back to git.kernel.org and retry.
+fetch() {
+  f=$1
+  for attempt in 1 2 3; do
+    for url in \
+      "https://raw.githubusercontent.com/torvalds/linux/$TAG/fs/vboxsf/$f" \
+      "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/plain/fs/vboxsf/$f?h=$TAG"
+    do
+      if curl -fsSLo "$tmp/$f" "$url" 2>/dev/null && [ -s "$tmp/$f" ]; then
+        return 0
+      fi
+    done
+    echo "  retrying fs/vboxsf/$f ($attempt/3)..." >&2
+    sleep $((attempt * 10))
+  done
+  return 1
+}
+
 for f in $FILES; do
-  curl -fsSLo "$tmp/$f" "https://raw.githubusercontent.com/torvalds/linux/$TAG/fs/vboxsf/$f" ||
-    { echo "failed to download fs/vboxsf/$f at $TAG" >&2; exit 1; }
+  fetch "$f" || { echo "failed to download fs/vboxsf/$f at $TAG" >&2; exit 1; }
 done
 
 patch -d "$tmp" -p3 --no-backup-if-mismatch -i "$HERE/patches/0001-vboxsf-fix-endless-write-loop-on-short-copy.patch"
