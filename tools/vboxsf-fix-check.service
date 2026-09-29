@@ -1,6 +1,15 @@
 [Unit]
 Description=Check that the patched vboxsf driver is in use
+# DefaultDependencies=no is required.  Shared folder mounts are part of
+# local-fs.target, which is ordered *before* basic.target.  With the default
+# dependencies this unit would be ordered after basic.target, so guarding a
+# mount with it creates an ordering cycle - and systemd breaks such a cycle by
+# dropping a job, in practice apparmor.service, leaving the system with no
+# AppArmor profile loaded at all.
+DefaultDependencies=no
 After=systemd-modules-load.service
+Before=shutdown.target
+Conflicts=shutdown.target
 
 [Service]
 Type=oneshot

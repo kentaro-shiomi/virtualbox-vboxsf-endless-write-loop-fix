@@ -156,9 +156,16 @@ sudo cp tools/mount-guard.conf.example /etc/systemd/system/<your>.mount.d/fix-ch
 sudo systemctl daemon-reload
 ```
 
-See `tools/mount-guard.conf.example`. Making the (empty) mount point immutable with
-`chattr +i` additionally prevents writes from silently landing in the guest file system
-while the share is not mounted.
+See `tools/mount-guard.conf.example`, which also shows how to order the guard before
+your mount unit. The unit ships with `DefaultDependencies=no` on purpose: shared folder
+mounts are part of `local-fs.target` and run before `basic.target`, so without it the
+guard introduces an ordering cycle, and systemd breaks such a cycle by dropping a job -
+in practice `apparmor.service`, leaving the system with no AppArmor profile loaded.
+After editing, run `systemd-analyze verify <your>.mount`, and after the next reboot
+check `journalctl -b | grep -i 'ordering cycle'` (no output) and `aa-status`.
+
+Making the (empty) mount point immutable with `chattr +i` additionally prevents writes
+from silently landing in the guest file system while the share is not mounted.
 
 ## Workarounds without patching
 

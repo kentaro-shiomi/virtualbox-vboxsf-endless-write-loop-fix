@@ -1,6 +1,17 @@
 # Drop-in for your shared folder mount unit, e.g.
 #   /etc/systemd/system/home-user-Shared.mount.d/fix-check.conf
 # so that the shared folder is not mounted unless the patched driver is in use.
+#
+# Also order the guard before your mount unit:
+#   sudo systemctl edit vboxsf-fix-check.service
+#   [Unit]
+#   Before=home-user-Shared.mount
+#
+# Then make sure no ordering cycle was introduced:
+#   systemd-analyze verify home-user-Shared.mount
+#   # and after the next reboot:
+#   journalctl -b | grep -i 'ordering cycle'   # expected: no output
+#   aa-status | head -2                        # expected: profiles are loaded
 [Unit]
 Requires=vboxsf-fix-check.service
 After=vboxsf-fix-check.service
